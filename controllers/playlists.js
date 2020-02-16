@@ -1,97 +1,58 @@
-const express = require('express');
-const router = express.Router();
+const router = require('express').Router();
+let Playlist = require('../models/playlist');
 
-const Playlist = require('../models/playlist');
-const User = require('../models/user');
-
-// New route
-router.get('/new', async (req, res) => {
-	try {
-		const allUsers = await User.find();
-
-		res.render('playlists/new.ejs', {
-			users: allUsers
-		});
-	} catch (err) {
-		res.send(err);
-	}
+// Index Route
+router.route('/').get((req, res) => {
+    Playlist.find()
+        .then(playlists => res.json(playlists))
+        .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Create route
-router.post('/', async (req, res) => {
-	try {
-		const foundUser = await User.findOne({username:req.session.username})
-		req.body.user = foundUser._id
-		await Playlist.create(req.body);
+// Add route
+router.post( '/add', async (req, res) => {
+    const playlistname = req.body.playlistname;
+    const genre = req.body.genre; 
+    const description = req.body.description; 
 
-		res.redirect('/playlists');
-	} catch (err) {
-		res.send(err);
-	}
+    const newPlaylist = new Playlist({
+        playlistname, 
+        genre, 
+        description
+    });
+
+    newPlaylist.save()
+        .then(() => res.json('Playlist added!'))
+        .catch(err => res.status(400).json('Error: ' +err));
+
 });
 
-// Index route
-router.get('/', async (req, res) => {
-	try {
-		const foundPlaylists = await Playlist.find();
-
-		res.render('playlists/index.ejs', {
-			playlists: foundPlaylists
-		});
-	} catch (err) {
-		res.send(err);
-	}
+// Get route
+router.route('/:id').get((req, res) => {
+    Playlist.findById(req.params.id)
+    .then(playlist => res.json(playlist))
+    .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Show route
-router.get('/:id', async (req, res) => {
-	try {
-		const foundPlaylist = await Playlist.findById(req.params.id).populate('user');
-
-		res.render('playlists/show.ejs', {
-			playlist: foundPlaylist
-		});
-	} catch (err) {
-		res.send(err);
-	}
+// Delete Route
+router.route('/:id').delete((req, res) => {
+    Playlist.findByIdAndDelete(req.params.id)
+    .then(() => res.json('Playlist deleted.'))
+    .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Edit route
-router.get('/:id/edit', async (req, res) => {
-	try {
-		const foundPlaylist = await Playlist.findById(req.params.id);
-		console.log(foundPlaylist);
-		const allUsers = await User.find();
+// Update Route
+router.route('/update/:id').post((req, res) => {
+    Playlist.findById(req.params.id)
+    .then(playlist => {
+        playlist.playlistname = req.body.playlistname;
+        playlist.genre = req.body.genre;
+        playlist.description = req.body.description;
 
-		res.render('playlists/edit.ejs', {
-			playlist: foundPlaylist,
-			users: allUsers,
-		});
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Update route
-router.put('/:id', async (req, res) => {
-	try {
-        await Playlist.findByIdAndUpdate(req.params.id, req.body);
-        
-		res.redirect(`/playlists/${req.params.id}`);
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Delete route
-router.delete('/:id', async (req, res) => {
-	try {
-		await Playlist.findByIdAndRemove(req.params.id);
-
-		res.redirect('/playlists');
-	} catch (err) {
-		res.send(err);
-	}
-});
+        playlist.save()
+            .then(() => res.json('Playlist updated!'))
+            .catch(err => res.status(400).json('Error: ' + err));
+    })
+    .catch(err => res.status(400).json('Error: ' + err));
+})
 
 module.exports = router;

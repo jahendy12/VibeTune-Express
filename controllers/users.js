@@ -1,153 +1,52 @@
-const express = require('express');
-const router = express.Router();
+const router = require('express').Router();
+let User = require('../models/user');
 
-const User = require('../models/user');
-const Playlist = require('../models/playlist');
-
-const bcrypt = require('bcrypt');
-
-// New route
-router.get('/new', async (req, res) => {
-	res.render('users/new.ejs');
+//Index Route
+router.route('/').get((req, res) => {
+    User.find()
+        .then(users => res.json(users))
+        .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Create route
-router.post('/', async (req, res) => {
-	try {
-		console.log(req.body);
-		await User.create(req.body);
+//Add Route
+router.route('/add').post((req, res) => {
+    const username = req.body.username; 
 
-		res.redirect('/users');
-	} catch (err) {
-		res.send(err);
-	}
+    const newUser = new User({username})
+
+    newUser.save()
+        .then(() => res.json('User added!'))
+        .catch(err => res.status(400).json('Error: ' +err));
 });
 
-// Index route
-router.get('/', async (req, res) => {
-	console.log('req.session in users index', req.session);
-	try {
-		const foundUsers = await User.find();
- 
-		res.render('users/index.ejs', {
-			users: foundUsers
-		});
-		
-	} catch (err) {
-		res.send(err);
-	}
+// Get route
+router.route('/:id').get((req, res) => {
+    User.findById(req.params.id)
+    .then(user => res.json(user))
+    .catch(err => res.status(400).json('Error: ' + err));
 });
 
-//Log out route
-router.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if(err) {
-            res.send(err);
-        } else {
-            res.redirect('/');
-        }
+// Delete Route
+router.route('/:id').delete((req, res) => {
+    User.findByIdAndDelete(req.params.id)
+    .then(() => res.json('User deleted.'))
+    .catch(err => res.status(400).json('Error: ' + err));
+});
+
+// Update Route
+router.route('/update/:id').post((req, res) => {
+    User.findById(req.params.id)
+    .then(user => {
+        user.name = req.body.name;
+        user.email = req.body.email;
+        user.username = req.body.username;
+        user.password = req.body.password;
+
+        user.save()
+            .then(() => res.json('User updated!'))
+            .catch(err => res.status(400).json('Error: ' + err));
     })
-})
-
-// Show route
-router.get('/:id', async (req, res) => {
-	try {
-		const foundUser = await User.findById(req.params.id);
-
-		const usersPlaylists = await Playlist.find({ user: foundUser._id });
-
-		res.render('users/show.ejs', {
-			user: foundUser,
-			playlists: usersPlaylists
-		});
-		
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Edit route
-router.get('/:id/edit', async (req, res) => {
-	try {
-		const foundUser = await User.findById(req.params.id);
-
-		res.render('users/edit.ejs', {
-			user: foundUser
-		});
-		
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Update route
-router.put('/:id', async (req, res) => {
-	try {
-		await User.findByIdAndUpdate(req.params.id, req.body);
-		
-		res.redirect(`/users/${req.params.id}`);
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Delete route
-router.delete('/:id', async (req, res) => {
-	try {
-		await User.findByIdAndRemove(req.params.id);
-
-		await Playlist.deleteMany({ user: req.params.id });		
-		
-		res.redirect('/users');
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-//Log in route
-router.post('/login', async (req, res) => {
-    try {
-        const foundUser = await User.findOne({ username: req.body.username });
-        if(foundUser){
-            if(bcrypt.compareSync(req.body.password, foundUser.password)) {
-                req.session.message = '';
-                req.session.username = foundUser.username;
-                req.session.logged = true;
-
-                res.redirect('/users');
-            } else {
-                req.session.message = 'Username or password is incorrect';
-                res.redirect('/');
-            }
-        } else {
-            req.session.message = 'Username or password is incorrect';
-            res.redirect('/');
-        }
-    } catch(err) {
-        res.send(err);
-    }
-})
-
-///Register Route
-
-router.post('/registration', async (req, res) => {
-    
-	const passwordHash = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
-	console.log(passwordHash);
-    const userDbEntry = {
-        username: req.body.username,
-        password: passwordHash,
-        email: req.body.email
-	}
-	console.log(userDbEntry);
-    try {
-		const createdUser = await User.create(userDbEntry);
-        req.session.username = createdUser.username;
-        req.session.logged = true;
-        res.redirect('/users');
-    } catch(err) {
-        res.send(err);
-    }
+    .catch(err => res.status(400).json('Error: ' + err));
 })
 
 module.exports = router;

@@ -1,11 +1,13 @@
 const mongoose = require('mongoose')
 
+const Schema = mongoose.Schema;
+
 const playlistSchema = mongoose.Schema({
-  name: {type: String, required: true},
-  genre: {type: String, required: true}, 
-// spotifyProfile: , 
-  likes: {type: Number, default: 0}, 
-  dislikes: {type: Number, default: 0}
+  name: String,
+  genre: String, 
+  description: String
 })
 
-module.exports = mongoose.model('Playlist', playlistSchema)
+const Playlist = mongoose.model('Playlist', playlistSchema)
+
+module.exports = Playlist;

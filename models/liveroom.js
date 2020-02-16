@@ -1,11 +1,13 @@
 const mongoose = require('mongoose')
 
+const Schema = mongoose.Schema;
+
 const liveroomSchema = mongoose.Schema({
-  name: {type: String, required: true},
-  genre: {type: String, required: true},
-// spotifyProfile: ,  
-  likes: {type: Number, default: 0}, 
-  dislikes: {type: Number, default: 0}
+    name: {type: String},
+    genre: {type: String}, 
+    description: {type: String}
 })
 
-module.exports = mongoose.model('Liveroom', liveroomSchema)
+const Liveroom = mongoose.model('Liveroom', liveroomSchema)
+
+module.exports = Liveroom;

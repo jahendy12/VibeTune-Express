@@ -1,97 +1,55 @@
-const express = require('express');
-const router = express.Router();
+const router = require('express').Router();
+let Liveroom = require('../models/liveroom');
 
-const User = require('../models/user');
-const Liveroom = require('../models/liveroom')
-
-// New route
-router.get('/new', async (req, res) => {
-	try {
-		const allUsers = await User.find();
-
-		res.render('liverooms/new.ejs', {
-			users: allUsers
-		});
-	} catch (err) {
-		res.send(err);
-	}
+router.route('/').get((req, res) => {
+    Liveroom.find()
+        .then(liverooms => res.json(liverooms))
+        .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Create route
-router.post('/', async (req, res) => {
-	try {
-		const foundUser = await User.findOne({username:req.session.username})
-		req.body.user = foundUser._id
-		await Liveroom.create(req.body);
+router.route('/add').post((req, res) => {
+    const liveroomname = req.body.liveroomname;
+    const genre = req.body.genre; 
+    const description = req.body.description; 
 
-		res.redirect('/liverooms');
-	} catch (err) {
-		res.send(err);
-	}
+    const newLiveroom = new Liveroom({
+        liveroomname, 
+        genre, 
+        description
+    });
+
+    newLiveroom.save()
+        .then(() => res.json('Liveroom added!'))
+        .catch(err => res.status(400).json('Error: ' +err));
 });
 
-// Index route
-router.get('/', async (req, res) => {
-	try {
-		const foundLiverooms = await Liveroom.find();
-
-		res.render('liverooms/index.ejs', {
-			liverooms: foundLiverooms
-		});
-	} catch (err) {
-		res.send(err);
-	}
+// Get route
+router.route('/:id').get((req, res) => {
+    Liveroom.findById(req.params.id)
+    .then(liveroom => res.json(liveroom))
+    .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Show route
-router.get('/:id', async (req, res) => {
-	try {
-		const foundLiveroom = await Liveroom.findById(req.params.id).populate('user');
-
-		res.render('liverooms/show.ejs', {
-			liveroom: foundLiveroom
-		});
-	} catch (err) {
-		res.send(err);
-	}
+// Delete Route
+router.route('/:id').delete((req, res) => {
+    Liveroom.findByIdAndDelete(req.params.id)
+    .then(() => res.json('Liveroom deleted.'))
+    .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Edit route
-router.get('/:id/edit', async (req, res) => {
-	try {
-		const foundLiveroom = await Liveroom.findById(req.params.id);
-		console.log(foundLiveroom);
-		const allUsers = await User.find();
+// Update Route
+router.route('/update/:id').post((req, res) => {
+    Liveroom.findById(req.params.id)
+    .then(liveroom => {
+        liveroom.liveroomname = req.body.liveroomname;
+        liveroom.genre = req.body.genre;
+        liveroom.description = req.body.description;
 
-		res.render('liverooms/edit.ejs', {
-			liveroom: foundLiveroom,
-			users: allUsers,
-		});
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Update route
-router.put('/:id', async (req, res) => {
-	try {
-        await Liveroom.findByIdAndUpdate(req.params.id, req.body);
-        
-		res.redirect(`/liverooms/${req.params.id}`);
-	} catch (err) {
-		res.send(err);
-	}
-});
-
-// Delete route
-router.delete('/:id', async (req, res) => {
-	try {
-		await Liveroom.findByIdAndRemove(req.params.id);
-
-		res.redirect('/liverooms');
-	} catch (err) {
-		res.send(err);
-	}
-});
+        liveroom.save()
+            .then(() => res.json('Liveroom updated!'))
+            .catch(err => res.status(400).json('Error: ' + err));
+    })
+    .catch(err => res.status(400).json('Error: ' + err));
+})
 
 module.exports = router;

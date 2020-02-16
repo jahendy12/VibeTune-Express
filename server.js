@@ -1,39 +1,31 @@
-require('dotenv').config();
-
 const express = require('express');
-const app = express();
-const methodOverride = require('method-override');
-const session = require('express-session');
-const port = process.env.PORT;
+const cors = require ('cors');
+const mongoose = require('mongoose');
 
 require('dotenv').config();
-require('./db/db.js');
 
-// MIDDLEWARE
-app.use(session({
-    secret: 'ilovesecrets',
-    resave: false,
-    saveUninitialized: false
-}));
-app.use(express.urlencoded({ extended: false }));
-app.use(methodOverride('_method'));
-app.use(express.static('public'));
+const app = express();
+const port = 5000; 
 
-// CONTROLLERS
-const usersController = require('./controllers/users.js');
-app.use('/users', usersController);
+app.use(cors());
+app.use(express.json());
 
-const playlistsController = require('./controllers/playlists.js');
-app.use('/playlists', playlistsController);
-
-app.get('/', (req, res) => {
-    res.render('index.ejs', {
-        message: req.session.message,
-        logged: req.session.logged,
-        username: req.session.username
-    });
+const uri = process.env.ATLAS_URI;
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true});
+//useCreateIndex: true
+const connection = mongoose.connection; 
+connection.once('open', () => {
+    console.log("MongoDB database connection established successfully");
 })
+
+const usersRouter = require('./controllers/users')
+const playlistsRouter = require('./controllers/playlists')
+const liveroomsRouter = require('./controllers/liverooms')
+
+app.use('/users', usersRouter);
+app.use('/playlists', playlistsRouter);
+app.use('/liverooms', liveroomsRouter);
 
 app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
-})
+    console.log(`Server is running on port: ${port}`);
+});
