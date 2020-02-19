@@ -11,7 +11,6 @@ router.route('/').get((req, res) => {
 //Add Route
 router.route('/add').post((req, res) => {
     const username = req.body.username; 
-
     const newUser = new User({username})
 
     newUser.save()
