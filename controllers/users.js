@@ -48,4 +48,11 @@ router.route('/update/:id').post((req, res) => {
     .catch(err => res.status(400).json('Error: ' + err));
 })
 
+// Login Route
+router.route('/login').post((req, res) => {
+    User.findOne({ username: req.body.username })
+    .then((user) => res.status(200).json(user))
+    .catch(err => res.status(400).json('Error: ' + err));
+})
+
 module.exports = router;

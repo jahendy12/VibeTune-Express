@@ -10,18 +10,18 @@ router.route('/').get((req, res) => {
 
 // Add route
 router.post( '/add', async (req, res) => {
-    const playlistname = req.body.playlistname;
+    const name = req.body.name;
     const genre = req.body.genre; 
     const description = req.body.description; 
 
     const newPlaylist = new Playlist({
-        playlistname, 
+        name, 
         genre, 
         description
     });
 
     newPlaylist.save()
-        .then(() => res.json('Playlist added!'))
+        .then((playlist) => res.json(playlist))
         .catch(err => res.status(400).json('Error: ' +err));
 
 });
@@ -44,12 +44,12 @@ router.route('/:id').delete((req, res) => {
 router.route('/update/:id').post((req, res) => {
     Playlist.findById(req.params.id)
     .then(playlist => {
-        playlist.playlistname = req.body.playlistname;
+        playlist.name = req.body.name;
         playlist.genre = req.body.genre;
         playlist.description = req.body.description;
 
         playlist.save()
-            .then(() => res.json('Playlist updated!'))
+            .then((playlist) => res.json(playlist))
             .catch(err => res.status(400).json('Error: ' + err));
     })
     .catch(err => res.status(400).json('Error: ' + err));

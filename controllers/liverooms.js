@@ -8,12 +8,12 @@ router.route('/').get((req, res) => {
 });
 
 router.route('/add').post((req, res) => {
-    const liveroomname = req.body.liveroomname;
+    const name = req.body.name;
     const genre = req.body.genre; 
     const description = req.body.description; 
 
     const newLiveroom = new Liveroom({
-        liveroomname, 
+        name, 
         genre, 
         description
     });
@@ -41,7 +41,7 @@ router.route('/:id').delete((req, res) => {
 router.route('/update/:id').post((req, res) => {
     Liveroom.findById(req.params.id)
     .then(liveroom => {
-        liveroom.liveroomname = req.body.liveroomname;
+        liveroom.name = req.body.name;
         liveroom.genre = req.body.genre;
         liveroom.description = req.body.description;
 
